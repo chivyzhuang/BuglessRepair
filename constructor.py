@@ -12,8 +12,9 @@ import string
 
 
 # global variables
-VERSION = "Version 1.2"
+VERSION = "Version 1.3"
 MANIFEST_DIR = os.path.join(BASE_DIR, "manifest")
+EXEC_DIR = os.path.join(BASE_DIR, "exec")
 RAW_DIR = os.path.join(BASE_DIR, "raw")
 RET_DIR = os.path.join(BASE_DIR, "result")
 DEFAULT_MANIFEST_FILE_NAME = "manifest_default"
@@ -41,12 +42,14 @@ def removeFile(src):
 
 # initial directory structure
 def opInit():
-  if not os.path.exists(RAW_DIR):
-    os.mkdir(RAW_DIR)
+  if not os.path.exists(EXEC_DIR):
+    os.mkdir(EXEC_DIR)
   if not os.path.exists(MANIFEST_DIR):
     os.mkdir(MANIFEST_DIR)
   if not os.path.exists(RET_DIR):
     os.mkdir(RET_DIR)
+  if not os.path.exists(RAW_DIR):
+    os.mkdir(RAW_DIR)
 
 
 # show the content of manifest file
@@ -93,10 +96,10 @@ def listDirExecptHiddenFile(dir_path):
 
 def showAvaiableExecFiles():
   # raw dir can not be empty
-  file_list = listDirExecptHiddenFile(RAW_DIR)
+  file_list = listDirExecptHiddenFile(EXEC_DIR)
   file_num = len(file_list)
   if file_num == 0:
-    print "There is not file in %s." % RAW_DIR
+    print "There is not file in %s." % EXEC_DIR
     return False
   i = 0
   for filename in file_list:
@@ -113,7 +116,7 @@ def addExec(interactive, file_name, target):
         index = raw_input('>>')
         if index.isdigit():
           index = string.atoi(index)
-          file_list = listDirExecptHiddenFile(RAW_DIR)
+          file_list = listDirExecptHiddenFile(EXEC_DIR)
           if index < 1 or index > len(file_list):
             print "Error input." 
           else:
@@ -136,7 +139,7 @@ def addExec(interactive, file_name, target):
 
 def addExecDetail(file_name, target):
   # file must be exist
-  file_path = os.path.join(RAW_DIR, file_name)
+  file_path = os.path.join(EXEC_DIR, file_name)
   if not os.path.exists(file_path):
     a, b = os.path.split(file_path)
     print "File '%s' can't be found in directory '%s'." % (b, a)
@@ -204,11 +207,21 @@ def createPackage(archive_name, manifest_name):
   f = zipfile.ZipFile(archive_path,'w', zipfile.ZIP_DEFLATED)
   print "Writing manifest..."
   f.write(manifest_path, 'manifest')
+  print "Writing exec files..."
   i = 0
   for item in exec_case.execs:
     i += 1
     print "(%d/%d)Writing %s..." % (i, len(exec_case.execs), item.file_name)
-    f.write(os.path.join(RAW_DIR, item.file_name), item.file_name)
+    f.write(os.path.join(EXEC_DIR, item.file_name), item.file_name)
+  file_list = listDirExecptHiddenFile(RAW_DIR)
+  file_num = len(file_list)
+  if file_num != 0:
+    print "Writing raw files..."
+    i = 0
+    for filename in file_list:
+      i += 1
+      print "(%d/%d)Writing %s..." % (i, file_num, filename)
+      f.write(os.path.join(RAW_DIR, filename), "raw/" + filename)
   f.close()
   print "Finish."
   from hashlib import md5
